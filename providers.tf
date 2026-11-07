@@ -8,6 +8,10 @@ terraform {
       source  = "hashicorp/helm"
       version = "~> 3.0"
     }
+    kubectl = {
+      source  = "gavinbunney/kubectl"
+      version = "~> 1.19.0"
+    }
     kind = {
       source  = "tehcyx/kind"
       version = "~> 0.13.0"
@@ -29,4 +33,12 @@ provider "helm" {
     client_key             = kind_cluster.default.client_key
     cluster_ca_certificate = kind_cluster.default.cluster_ca_certificate
   }
+}
+
+provider "kubectl" {
+  host                   = kind_cluster.default.endpoint
+  client_certificate     = kind_cluster.default.client_certificate
+  client_key             = kind_cluster.default.client_key
+  cluster_ca_certificate = kind_cluster.default.cluster_ca_certificate
+  load_config_file       = false
 }
