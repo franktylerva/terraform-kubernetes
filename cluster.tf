@@ -16,7 +16,7 @@ resource "terraform_data" "gateway_api_crds" {
   provisioner "local-exec" {
     command = <<-EOT
       kubectl apply --server-side -f https://github.com/kubernetes-sigs/gateway-api/releases/download/${local.gateway_api_version}/standard-install.yaml
-      # kubectl wait --for=condition=Established --timeout=60s crd -l customresourcedefinition.apiextensions.k8s.io/gateways.gateway.networking.k8s.io/bundle-version=${local.gateway_api_version},gateway.networking.k8s.io/channel=standard
+      kubectl create secret tls secret-tls -n default --cert=tls.pem --key=tls-key.pem
     EOT
 
     environment = {

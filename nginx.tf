@@ -76,6 +76,19 @@ resource "kubectl_manifest" "nginx_gateway" {
         protocol      = "HTTP"
         port          = 8000
         allowedRoutes = { namespaces = { from = "Same" } }
+      },
+      {
+        name          = "https"
+        protocol      = "HTTPS"
+        port          = 8443
+        allowedRoutes = { namespaces = { from = "Same" } }
+        tls = {
+          mode = "Terminate"
+          certificateRefs = [{
+            name      = "secret-tls"
+            namespace = "default"
+          }]
+        }
       }]
     }
   })
@@ -95,8 +108,12 @@ resource "kubectl_manifest" "nginx_route" {
       parentRefs = [{
         name        = kubectl_manifest.nginx_gateway.name
         sectionName = "http"
+      },
+      {
+        name        = kubectl_manifest.nginx_gateway.name
+        sectionName = "https"
       }]
-      hostnames = ["example-nginx.com"]
+      hostnames = ["nginx.example.com"]
       rules = [{
         # matches = [{
         #   path = {

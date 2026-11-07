@@ -12,6 +12,7 @@ crash.*.log
 # Local plans and CLI configuration
 *.tfplan
 *.plan
+*.pem
 .terraformrc
 terraform.rc
 
