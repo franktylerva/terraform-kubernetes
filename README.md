@@ -44,7 +44,7 @@ docker info
 Make sure Docker is running, then initialize OpenTofu, review the proposed
 changes, and apply them. The apply creates both the kind cluster and the
 Kubernetes resources. It also installs the pinned Gateway API Standard-channel
-CRDs before creating the workload:
+CRDs before installing Traefik and creating the workload:
 
 ```sh
 tofu init
@@ -57,13 +57,18 @@ Service:
 
 ```sh
 KUBECONFIG=terraform-learn-config kubectl get deployments,services
+KUBECONFIG=terraform-learn-config kubectl get service traefik -n traefik
 ```
 
 The example creates four NGINX replicas. The Service uses the NodePort
 configured in `kubernetes.tf`.
 
 The Gateway API CRDs provide the API types, but do not include a Gateway
-controller to implement them.
+controller to implement them. The Traefik Helm release enables its Gateway API
+provider and creates a GatewayClass and Gateway. Its Service uses NodePort,
+which avoids relying on a LoadBalancer implementation that kind does not
+provide. Kubernetes assigns the NodePort automatically; this example does not
+map that port to the host.
 
 ## Clean up
 
