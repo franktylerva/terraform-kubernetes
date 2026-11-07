@@ -43,7 +43,8 @@ docker info
 
 Make sure Docker is running, then initialize OpenTofu, review the proposed
 changes, and apply them. The apply creates both the kind cluster and the
-Kubernetes resources:
+Kubernetes resources. It also installs the pinned Gateway API Standard-channel
+CRDs before creating the workload:
 
 ```sh
 tofu init
@@ -60,6 +61,9 @@ KUBECONFIG=terraform-learn-config kubectl get deployments,services
 
 The example creates four NGINX replicas. The Service uses the NodePort
 configured in `kubernetes.tf`.
+
+The Gateway API CRDs provide the API types, but do not include a Gateway
+controller to implement them.
 
 ## Clean up
 
