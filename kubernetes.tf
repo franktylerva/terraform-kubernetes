@@ -1,4 +1,5 @@
 resource "kubernetes_deployment_v1" "nginx" {
+  depends_on = [kind_cluster.default]
   metadata {
     name = "scalable-nginx-example"
     labels = {
@@ -45,6 +46,7 @@ resource "kubernetes_deployment_v1" "nginx" {
 }
 
 resource "kubernetes_service_v1" "nginx" {
+  depends_on = [kind_cluster.default]
   metadata {
     name = "nginx-example"
   }
