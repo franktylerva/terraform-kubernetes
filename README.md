@@ -39,6 +39,103 @@ kubectl version --client
 docker info
 ```
 
+## Create a local TLS certificate with mkcert
+
+mkcert creates locally trusted development certificates. Install it with your
+package manager:
+
+**macOS (Homebrew):**
+
+```sh
+brew install mkcert
+```
+
+If you use Firefox, also install its certificate tools:
+
+```sh
+brew install nss
+```
+
+**Windows (Chocolatey, in an elevated PowerShell or Command Prompt):**
+
+```powershell
+choco install mkcert
+```
+
+Alternatively, with Scoop:
+
+```powershell
+scoop bucket add extras
+scoop install mkcert
+```
+
+Install mkcert's local development CA into your system trust store:
+
+```sh
+mkcert -install
+```
+
+From the project directory, create a certificate for localhost:
+
+```sh
+mkcert -cert-file tls.pem -key-file tls-key.pem example.com "*.example.com" example.test localhost 127.0.0.1 ::1
+```
+
+This creates `localhost.pem` and `localhost-key.pem`. To make the certificate
+available to Kubernetes, first create the kind cluster (for example, by
+running `tofu apply`). Then create a TLS Secret in the same namespace as the
+Gateway that will reference it. For the `nginx-gateway` in the default
+namespace, run this from the project directory:
+
+```sh
+KUBECONFIG=terraform-learn-config kubectl create secret tls localhost-tls \
+  --cert=localhost.pem \
+  --key=localhost-key.pem \
+  --namespace=default
+```
+
+On Windows PowerShell, set the kubeconfig for the command like this:
+
+```powershell
+$env:KUBECONFIG = "terraform-learn-config"
+kubectl create secret tls localhost-tls --cert=localhost.pem --key=localhost-key.pem --namespace=default
+```
+
+The current example's Gateway uses HTTP. Creating the certificate and Secret
+does not enable HTTPS; the Gateway must also have an HTTPS listener that
+references `localhost-tls`. Do not commit the generated private key or share
+mkcert's local CA private key.
+
+## Map `nginx.example.com` to localhost
+
+Add a hosts-file entry so your computer resolves `nginx.example.com` to the
+local machine:
+
+```text
+127.0.0.1 nginx.example.com
+```
+
+On **macOS**, open the hosts file with administrator privileges:
+
+```sh
+sudo nano /etc/hosts
+```
+
+Add the line above, save, and exit (`Ctrl+O`, `Enter`, then `Ctrl+X` in nano).
+
+On **Windows**, open Notepad as Administrator, then open:
+
+```text
+C:\Windows\System32\drivers\etc\hosts
+```
+
+If the file is not visible in the Open dialog, change the file type filter to
+show all files. Add the same line and save.
+
+This entry only configures name resolution; it does not expose Traefik from
+kind to the host. The Gateway must also be reachable on the host, and its
+HTTPRoute must specify `nginx.example.com` as a hostname for host-based routing.
+
 ## Deploy the example
 
 Make sure Docker is running, then initialize OpenTofu, review the proposed
