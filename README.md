@@ -106,13 +106,14 @@ does not enable HTTPS; the Gateway must also have an HTTPS listener that
 references `localhost-tls`. Do not commit the generated private key or share
 mkcert's local CA private key.
 
-## Map `nginx.example.com` to localhost
+## Map local hostnames to localhost
 
-Add a hosts-file entry so your computer resolves `nginx.example.com` to the
+Add hosts-file entries so your computer resolves the example hostnames to the
 local machine:
 
 ```text
 127.0.0.1 nginx.example.com
+127.0.0.1 registry.example.com
 ```
 
 On **macOS**, open the hosts file with administrator privileges:
@@ -130,11 +131,11 @@ C:\Windows\System32\drivers\etc\hosts
 ```
 
 If the file is not visible in the Open dialog, change the file type filter to
-show all files. Add the same line and save.
+show all files. Add both lines from the code block above and save.
 
-This entry only configures name resolution; it does not expose Traefik from
-kind to the host. The Gateway must also be reachable on the host, and its
-HTTPRoute must specify `nginx.example.com` as a hostname for host-based routing.
+These entries only configure name resolution; they do not expose Traefik from
+kind to the host. The Gateway must also be reachable on the host, and each
+HTTPRoute must specify the corresponding hostname for host-based routing.
 
 ## Deploy the example
 
@@ -159,7 +160,14 @@ KUBECONFIG=terraform-learn-config kubectl get service traefik -n traefik
 
 The NGINX Service remains internal to the cluster. The `nginx-gateway` Gateway
 and `nginx-route` HTTPRoute attach to Traefik and forward HTTP requests to that
-Service.
+Service. The registry is also internal to the cluster; its `registry-route`
+HTTPRoute forwards requests for `registry.example.com` to the registry Service.
+Registry image data is stored in a 5 GiB claim bound to a statically provisioned
+hostPath volume on the kind node. This avoids waiting for a storage-class
+provisioner that kind does not provide by default. The data survives registry
+pod replacement but is local to the kind node and is deleted with the cluster;
+hostPath storage is for this local example, not production. The Gateway's HTTPS
+listener must have a valid certificate for `registry.example.com`.
 
 The Gateway API CRDs provide the API types, but do not include a Gateway
 controller to implement them. The Traefik Helm release enables its Gateway API
