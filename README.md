@@ -114,6 +114,7 @@ local machine:
 ```text
 127.0.0.1 nginx.example.com
 127.0.0.1 registry.example.com
+127.0.0.1 keycloak.example.com
 ```
 
 On **macOS**, open the hosts file with administrator privileges:
@@ -122,7 +123,7 @@ On **macOS**, open the hosts file with administrator privileges:
 sudo nano /etc/hosts
 ```
 
-Add the line above, save, and exit (`Ctrl+O`, `Enter`, then `Ctrl+X` in nano).
+Add the entries above, save, and exit (`Ctrl+O`, `Enter`, then `Ctrl+X` in nano).
 
 On **Windows**, open Notepad as Administrator, then open:
 
@@ -131,11 +132,19 @@ C:\Windows\System32\drivers\etc\hosts
 ```
 
 If the file is not visible in the Open dialog, change the file type filter to
-show all files. Add both lines from the code block above and save.
+show all files. Add the entries from the code block above and save.
 
 These entries only configure name resolution; they do not expose Traefik from
-kind to the host. The Gateway must also be reachable on the host, and each
-HTTPRoute must specify the corresponding hostname for host-based routing.
+kind to the host. For local Keycloak access over HTTPS, forward Traefik's
+service port 443 to local port 443:
+
+```sh
+KUBECONFIG=terraform-learn-config kubectl port-forward -n traefik \
+  service/traefik 443:443
+```
+
+Then open `https://keycloak.example.com`. The Keycloak route attaches to the
+`keycloak-gateway` HTTPS listener, which uses the `secret-tls` certificate.
 
 ## Deploy the example
 
@@ -174,7 +183,9 @@ controller to implement them. The Traefik Helm release enables its Gateway API
 provider and creates a GatewayClass and Gateway. Its Service uses NodePort,
 which avoids relying on a LoadBalancer implementation that kind does not
 provide. Kubernetes assigns the NodePort automatically; this example does not
-map that port to the host.
+map that port to the host. The Keycloak HTTPRoute attaches to the
+`keycloak-gateway` and forwards `keycloak.example.com` to Keycloak's internal
+Service.
 
 ## Clean up
 
@@ -189,3 +200,17 @@ tofu destroy
 The cluster credentials are managed by the kind provider and passed directly
 to the Kubernetes provider. Keep Terraform state files private, and do not
 commit credentials or state to source control.
+
+The Keycloak example prompts for `keycloak_admin_password`; alternatively,
+provide it through `TF_VAR_keycloak_admin_password`. The admin username is
+`admin`. The password is stored in Terraform state, so protect the state file
+or use a suitably secured remote backend.
+
+Keycloak is available inside the cluster at
+`keycloak.keycloak.svc.cluster.local`. The included PostgreSQL database uses
+ephemeral storage for this local kind example, so its data is lost if its pod
+is recreated. Use persistent storage or a managed PostgreSQL database, TLS,
+and production-grade secret management for production. This example overrides
+the chart to use Bitnami's legacy Keycloak and PostgreSQL images because the
+current image tags are not publicly pullable; those legacy images are no longer
+maintained and should not be used in production.

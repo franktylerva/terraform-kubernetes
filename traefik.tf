@@ -16,7 +16,21 @@ resource "helm_release" "traefik" {
           enabled = true
         }
       }
-      gateway      = { enabled = true }
+      gateway = {
+        enabled = true
+        listeners = {
+          web = {
+            namespacePolicy = {
+              from = "Selector"
+              selector = {
+                matchLabels = {
+                  "traefik-gateway-access" = "true"
+                }
+              }
+            }
+          }
+        }
+      }
       gatewayClass = { enabled = true }
       service      = { spec = { type = "NodePort" } }
     })
