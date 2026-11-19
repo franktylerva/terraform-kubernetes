@@ -47,7 +47,7 @@ resource "kubectl_manifest" "keycloak_certificate" {
 
   depends_on = [kubectl_manifest.cert_manager_issuer]
 }
-resource "kubectl_manifest" "nginx_gateway" {
+resource "kubectl_manifest" "keycloak_gateway" {
   yaml_body = yamlencode({
     apiVersion = "gateway.networking.k8s.io/v1"
     kind       = "Gateway"
@@ -110,7 +110,7 @@ resource "helm_release" "keycloak" {
       auth = {
         adminUser         = "admin"
         existingSecret    = kubernetes_secret_v1.keycloak_admin.metadata[0].name
-        passwordSecretKey = "admin-password"
+        passwordSecretKey = keys(kubernetes_secret_v1.keycloak_admin.data)[0]
       }
       httpEnabled  = true
       proxyHeaders = "xforwarded"
