@@ -16,7 +16,8 @@ resource "terraform_data" "gateway_api_crds" {
   provisioner "local-exec" {
     command = <<-EOT
       kubectl apply --server-side -f https://github.com/kubernetes-sigs/gateway-api/releases/download/${local.gateway_api_version}/standard-install.yaml
-      kubectl create secret tls secret-tls -n keycloak --cert=tls.pem --key=tls-key.pem
+      kubectl create namespace cert-manager
+      kubectl create secret tls mkcert-ca-key-pair --key "$(mkcert -CAROOT)"/rootCA-key.pem --cert "$(mkcert -CAROOT)"/rootCA.pem -n cert-manager
     EOT
 
     environment = {

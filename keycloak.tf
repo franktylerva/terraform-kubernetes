@@ -26,6 +26,27 @@ resource "kubernetes_secret_v1" "keycloak_admin" {
   depends_on = [helm_release.traefik]
 }
 
+resource "kubectl_manifest" "keycloak_certificate" {
+  yaml_body = yamlencode({
+    apiVersion = "cert-manager.io/v1"
+    kind       = "Certificate"
+    metadata = {
+      name = "keycloak"
+      namespace = "keycloak"
+    }
+    spec = {
+      secretName = "secret-tls"
+      issuerRef = {
+        name = "mkcert-issuer"
+        kind = "ClusterIssuer"
+      }
+      commonName = "keycloak.example.com"
+      dnsNames = ["keycloak.example.com"]
+    }
+  })
+
+  depends_on = [kubectl_manifest.cert_manager_issuer]
+}
 resource "kubectl_manifest" "nginx_gateway" {
   yaml_body = yamlencode({
     apiVersion = "gateway.networking.k8s.io/v1"
@@ -58,7 +79,10 @@ resource "kubectl_manifest" "nginx_gateway" {
     }
   })
 
-  depends_on = [helm_release.traefik]
+  depends_on = [
+    helm_release.traefik,
+    kubectl_manifest.keycloak_certificate,
+  ]
 }
 
 resource "helm_release" "keycloak" {
