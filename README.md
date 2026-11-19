@@ -112,8 +112,6 @@ Add hosts-file entries so your computer resolves the example hostnames to the
 local machine:
 
 ```text
-127.0.0.1 nginx.example.com
-127.0.0.1 registry.example.com
 127.0.0.1 keycloak.example.com
 ```
 
